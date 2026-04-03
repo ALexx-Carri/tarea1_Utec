@@ -8,10 +8,7 @@ class Tensor {
     size_t total_size;
 public:
     Tensor(const vector<size_t>& tamaño, const vector<double>& values) : shape(tamaño) {
-    for (size_t i = 0; i < shape.size(); i++) {
-        if (shape[i] ==0) {throw invalid_argument("No puedes crear una matriz de 0 dimensiones");}
-    }
-        total_size = 1;
+         total_size = 1;
         for (size_t dim : shape) total_size *= dim;
         if (values.size() != total_size) {
             throw invalid_argument("El tamaño de values no coincide con la forma (shape)");
@@ -25,8 +22,38 @@ public:
         delete[] datos;
     }
     friend ostream& operator<<(ostream& os, const Tensor& t) {
-        for (size_t i = 0; i < t.total_size; i++) {
-            os << t.datos[i] << " ";
+        if (t.total_size ==0) {return os<<"[]";}
+        size_t dims = t.shape.size();
+        if (dims==1){
+            os << "[";
+            for (size_t i = 0; i < t.total_size; ++i) {
+                os << t.datos[i] << (i == t.total_size - 1 ? "" : ", ");
+            }
+            os << "]";
+        }
+        else if (dims==2) {
+            size_t filas = t.shape[0];size_t columnas = t.shape[1];
+            os<<"[";
+            for (size_t i = 0; i < filas; i++) {
+                os<<"[";
+                for (size_t j = 0; j < columnas; j++) {
+                    os<<t.datos[i * columnas + j]<<(j==columnas-1?"":", ");
+                }
+                os<<"]"<<(i==filas-1?"":",\n");
+            }os<<"]";}
+        else if (dims==3) {
+            size_t profundidad=t.shape[0];
+            size_t filas = t.shape[1];size_t columnas = t.shape[2];
+            os<<"[\n";
+            for (size_t d = 0; d < profundidad; d++) {
+                os<<" [\n";
+                for (size_t j = 0; j < filas; j++) {
+                    os<<" [\n";
+                    for (size_t k = 0; k < columnas; k++) {
+                        os<<t.datos[d*filas*columnas+d*columnas+j]<<(j==columnas-1?"":", ");
+                    }os<<"]"<<(j==filas-1?"":",\n");
+                }os<<"\n ]"<<(d==profundidad-1?"":",\n");
+            }os<<"\n]";
         }
         return os;
     }
@@ -58,26 +85,23 @@ public:
             throw invalid_argument("Dimensiones no compatibles para multiplicar matrices");
         }
 
-        size_t M = tensor1.shape[0]; // Filas de T1
-        size_t N = tensor1.shape[1]; // Columnas de T1 (y filas de T2)
-        size_t P = tensor2.shape[1]; // Columnas de T2
+        size_t M = tensor1.shape[0]; // Filas de A
+        size_t N = tensor1.shape[1]; // Columnas de A (y filas de B)
+        size_t P = tensor2.shape[1]; // Columnas de B
 
         vector<size_t> nuevo_shape = {M, P};
         vector<double> res_values(M * P, 0.0);
 
-        for (size_t i = 0; i < M; i++) {         // Recorre filas de T1
-            for (size_t j = 0; j < P; j++) {     // Recorre columnas de T2
-                double suma = 0.0;
-
-                // 2. Bucle interno: hace el producto punto de la fila i y la columna j
+        for (size_t i = 0; i < M; i++) {
+            for (size_t j = 0; j < P; j++) {
+                double suma = 0;
                 for (size_t k = 0; k < N; k++) {
-                    // T1[i][k] * T2[k][j]
-                    double valA = tensor1.datos[i * N + k];
-                    double valB = tensor2.datos[k * P + j];
-                    suma += valA * valB;
+                    // Formula: matriz[fila][columna] -> datos[fila * ancho + columna]
+                    // Para t1: fila 'i', columna 'k', ancho 'N'
+                    // Para t2: fila 'k', columna 'j', ancho 'P'
+                    suma += tensor1.datos[i * N + k] * tensor2.datos[k * P + j];
                 }
-
-                // 3. Guardar el resultado en la posición [i][j] de la matriz resultante
+                // Para el resultado: fila 'i', columna 'j', ancho 'P'
                 res_values[i * P + j] = suma;
             }
         }
@@ -91,7 +115,7 @@ int main() {
         Tensor t3 = t2*t1;
         cout<<"Primera matriz:\n"<<t1<<endl;
         cout<<"Segunda matriz:\n"<<t2<<endl;
-        cout << "Resultado suma: " << t3 << endl;
+        cout << "Resultado suma: \n" << t3 << endl;
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << endl;
     }
