@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include <cmath>
 using namespace std;
 class Tensor {
 private:
@@ -177,16 +178,59 @@ public:
         }
         return Tensor(nuevo_shape, res_values);
     }
+
 };
+// -------------------------
+// TRANSFORMACIONES (Punto 10)
+// -------------------------
+
+class TensorTransform{
+public:
+    virtual Tensor apply(const Tensor& t) const = 0;
+    virtual ~TensorTransform() = default;
+};
+
+class ReLU : public TensorTransform{
+public:
+    Tensor apply(const Tensor& t) const override{
+        vector<double> valores(t.total_size);
+        for(size_t i = 0; i < t.total_size; i++){
+            valores[i] = max(0.0, t.datos[i]);
+        }
+        return Tensor(t.shape, valores);
+    }
+};
+class Sigmoid : public TensorTransform{
+public:
+    Tensor apply(const Tensor& t) const override{
+        vector<double> valores(t.total_size);
+        for(size_t i = 0; i < t.total_size; i++){
+            valores[i] = 1.0 / (1.0 + exp(-t.datos[i]));
+        }
+        return Tensor(t.shape, valores);
+    }
+};
+
 int main() {
     try {
-        Tensor A({3},{1,2,3});
-        Tensor B({3},{4,5,6});
+        Tensor A({3},{1,10,3});
+        Tensor B({3},{7,5,6});
         Tensor C = dot(A,B);
         cout<<"Producto punto:\n"<<C<<endl;
     }
     catch(const exception& e){
         cerr<<"Error: "<<e.what()<<endl;
     }
+    Tensor entrada({1000,20,20}, vector<double>(1000*20*20,1.0));
+    Tensor X = entrada.view({1000,400});
+    Tensor W1({400,100}, vector<double>(400*100,0.5));
+    Tensor Z1 = matmul(X,W1);
+    ReLU relu;
+    Tensor H1 = relu.apply(Z1);
+    Tensor W2({100,10}, vector<double>(100*10,0.3));
+    Tensor Z2 = matmul(H1,W2);
+    Sigmoid sig;
+    Tensor salida = sig.apply(Z2);
+    cout << "\nSalida de la red neuronal calculada\n";
     return 0;
 }
