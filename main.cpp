@@ -23,7 +23,24 @@ public:
     ~Tensor() {
         delete[] datos;
     }
-
+    Tensor(const Tensor& other) : shape(other.shape), total_size(other.total_size) {
+        datos = new double[total_size];
+        for (size_t i = 0; i < total_size; i++) datos[i] = other.datos[i];
+    }
+    Tensor(Tensor&& other) noexcept : datos(other.datos), shape(move(other.shape)), total_size(other.total_size) {
+        other.datos = nullptr;
+        other.total_size = 0;
+    }
+    Tensor& operator=(const Tensor& other) {
+        if (this != &other) {
+            delete[] datos;
+            shape = other.shape;
+            total_size = other.total_size;
+            datos = new double[total_size];
+            for (size_t i = 0; i < total_size; i++) datos[i] = other.datos[i];
+        }
+        return *this;
+    }
     Tensor view(const vector<size_t>& new_shape) const {
         if (new_shape.size() == 0 || new_shape.size() > 3) {
             throw invalid_argument("La nueva forma debe tener entre 1 y 3 dimensiones");
