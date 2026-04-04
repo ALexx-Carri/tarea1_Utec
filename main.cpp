@@ -11,7 +11,7 @@ private:
     size_t total_size;
 public:
     Tensor(const vector<size_t>& tamaño, const vector<double>& values) : shape(tamaño) {
-        total_size = 1;
+         total_size = 1;
         for (size_t dim : shape) total_size *= dim;
         if (values.size() != total_size) {
             throw invalid_argument("El tamaño de values no coincide con la forma (shape)");
@@ -20,6 +20,39 @@ public:
         for (size_t i = 0; i < total_size; i++) {
             datos[i] = values[i];
         }
+    }
+    Tensor(const Tensor& other) : shape(other.shape), total_size(other.total_size) {
+        datos = new double[total_size];
+        for (size_t i = 0; i < total_size; ++i) {
+            datos[i] = other.datos[i];
+        }
+    }
+    Tensor(Tensor&& other) noexcept : datos(other.datos), shape(std::move(other.shape)), total_size(other.total_size) {
+        other.datos = nullptr;
+        other.total_size = 0;
+    }
+    Tensor& operator=(const Tensor& other) {
+        if (this != &other) {
+            delete[] datos;
+            shape = other.shape;
+            total_size = other.total_size;
+            datos = new double[total_size];
+            for (size_t i = 0; i < total_size; ++i) {
+                datos[i] = other.datos[i];
+            }
+        }
+        return *this;
+    }
+    Tensor& operator=(Tensor&& other) noexcept {
+        if (this != &other) {
+            delete[] datos;
+            datos = other.datos;
+            shape = std::move(other.shape);
+            total_size = other.total_size;
+            other.datos = nullptr;
+            other.total_size = 0;
+        }
+        return *this;
     }
     ~Tensor() {
         delete[] datos;
