@@ -8,6 +8,8 @@ private:
     double* datos;
     vector<size_t> shape;
     size_t total_size;
+    friend class ReLU; 
+    friend class Sigmoid;
 public:
     Tensor(const vector<size_t>& tamaño, const vector<double>& values) : shape(tamaño) {
         total_size = 1;
@@ -38,6 +40,17 @@ public:
             total_size = other.total_size;
             datos = new double[total_size];
             for (size_t i = 0; i < total_size; i++) datos[i] = other.datos[i];
+        }
+        return *this;
+    }
+Tensor& operator=(Tensor&& other) noexcept {
+        if (this != &other) {
+            delete[] datos;
+            datos = other.datos;
+            shape = move(other.shape);
+            total_size = other.total_size;
+            other.datos = nullptr;
+            other.total_size = 0;
         }
         return *this;
     }
@@ -136,7 +149,12 @@ public:
             }
             os << "]";
         }
+        else if (t.shape.size() == 3) {
+            os << "[Tensor 3D de " << t.shape[0] << "x" << t.shape[1] << "x" << t.shape[2] << "]";
+            return os;
+        }
         return os;
+        
     }
     friend Tensor operator+(const Tensor& tensor1, const Tensor& tensor2) {
         if (tensor1.shape != tensor2.shape) {
