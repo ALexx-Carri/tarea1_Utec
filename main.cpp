@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include<random>
 using namespace std;
 
 class Tensor {
