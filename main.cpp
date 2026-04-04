@@ -3,6 +3,7 @@
 #include <stdexcept> // Para invalid_argument
 using namespace std;
 class Tensor {
+private:
     double* datos;
     vector<size_t> shape;
     size_t total_size;
@@ -79,34 +80,46 @@ public:
         }
         return Tensor(tensor1.shape, resultado);
     }
-    friend Tensor operator*(const Tensor& tensor1, const Tensor& tensor2) {
-        // 1. Validar dimensiones (M x N) * (N x P) -> (M x P)
+    friend Tensor operator *(const Tensor& a, const Tensor& b) {
+   if (a.shape != b.shape) {
+       throw invalid_argument("Dimensiones no compatibles para la multiplicacion de elemento a elemento");
+   }
+        vector<double> resultado(a.total_size);
+        for (size_t i = 0; i < a.total_size; i++) {
+            resultado[i] = a.datos[i] * b.datos[i];
+        }
+        return Tensor(a.shape, resultado);
+    }
+    friend Tensor operator *(const Tensor& a, const double& b) {
+        vector<double> resultado(a.total_size);
+        for (size_t i = 0; i < a.total_size; i++) {
+            resultado[i] = a.datos[i] * b;
+        }
+        return Tensor(a.shape, resultado);
+    }
+    friend Tensor matmul(const Tensor& tensor1, const Tensor& tensor2) {
+        // Validar dimensiones (M x N) * (N x P) -> (M x P)
         if (tensor1.shape.size() != 2 || tensor2.shape.size() != 2 || tensor1.shape[1] != tensor2.shape[0]) {
             throw invalid_argument("Dimensiones no compatibles para multiplicar matrices");
         }
 
-        size_t M = tensor1.shape[0]; // Filas de A
-        size_t N = tensor1.shape[1]; // Columnas de A (y filas de B)
-        size_t P = tensor2.shape[1]; // Columnas de B
-
+        size_t M = tensor1.shape[0];
+        size_t N = tensor1.shape[1];
+        size_t P = tensor2.shape[1];
         vector<size_t> nuevo_shape = {M, P};
         vector<double> res_values(M * P, 0.0);
-
         for (size_t i = 0; i < M; i++) {
             for (size_t j = 0; j < P; j++) {
                 double suma = 0;
                 for (size_t k = 0; k < N; k++) {
-                    // Formula: matriz[fila][columna] -> datos[fila * ancho + columna]
-                    // Para t1: fila 'i', columna 'k', ancho 'N'
-                    // Para t2: fila 'k', columna 'j', ancho 'P'
                     suma += tensor1.datos[i * N + k] * tensor2.datos[k * P + j];
                 }
-                // Para el resultado: fila 'i', columna 'j', ancho 'P'
                 res_values[i * P + j] = suma;
             }
         }
         return Tensor(nuevo_shape, res_values);
     }
+
 };
 int main() {
     try {
