@@ -100,6 +100,46 @@ public:
         }
         return os;
     }
+    static Tensor zeros(const vector<size_t>& shape) {
+        size_t size=1;
+        for (size_t dimension : shape) size *= dimension;
+        vector<double> valores(size,0.0);
+        return Tensor(shape, valores);
+    }
+    static Tensor ones(const vector<size_t>& shape) {
+        size_t size=1;
+        for (size_t dimension : shape) size *= dimension;
+        vector<double> valores(size,1.0);
+        return Tensor(shape, valores);
+    }
+    static Tensor random(const vector<size_t>& shape,double minimo,double maximo) {
+        size_t size=1;
+        for (size_t dimension : shape) {
+            if (dimension == 0)throw invalid_argument("Dimension no puede ser 0");
+            size *= dimension;
+        }
+        vector<double> valores(size);
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_real_distribution<double> dis(minimo,maximo);
+        for (size_t i=0;i<size;i++) {
+            valores[i]=dis(gen);
+        }
+        return Tensor(shape, valores);
+    }
+    static Tensor arange(double start, double stop) {
+        if (stop <= start) {
+            throw std::invalid_argument("El valor de 'stop' debe ser mayor que 'start'");
+        }
+        size_t tamano = static_cast<size_t>(stop - start);
+        std::vector<double> valores;
+        valores.reserve(tamano);
+        for (double i = start; i < stop; ++i) {
+            valores.push_back(i);
+        }
+        std::vector<size_t> shape_1D = { valores.size() };
+        return Tensor(shape_1D, valores);
+    }
     friend Tensor operator+(const Tensor& tensor1, const Tensor& tensor2) {
 
         if (tensor1.shape != tensor2.shape) {
