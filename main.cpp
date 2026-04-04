@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
-#include<random>
 using namespace std;
-
 class Tensor {
 private:
     double* datos;
@@ -11,7 +9,7 @@ private:
     size_t total_size;
 public:
     Tensor(const vector<size_t>& tamaño, const vector<double>& values) : shape(tamaño) {
-         total_size = 1;
+        total_size = 1;
         for (size_t dim : shape) total_size *= dim;
         if (values.size() != total_size) {
             throw invalid_argument("El tamaño de values no coincide con la forma (shape)");
@@ -21,48 +19,15 @@ public:
             datos[i] = values[i];
         }
     }
-    Tensor(const Tensor& other) : shape(other.shape), total_size(other.total_size) {
-        datos = new double[total_size];
-        for (size_t i = 0; i < total_size; ++i) {
-            datos[i] = other.datos[i];
-        }
-    }
-    Tensor(Tensor&& other) noexcept : datos(other.datos), shape(std::move(other.shape)), total_size(other.total_size) {
-        other.datos = nullptr;
-        other.total_size = 0;
-    }
-    Tensor& operator=(const Tensor& other) {
-        if (this != &other) {
-            delete[] datos;
-            shape = other.shape;
-            total_size = other.total_size;
-            datos = new double[total_size];
-            for (size_t i = 0; i < total_size; ++i) {
-                datos[i] = other.datos[i];
-            }
-        }
-        return *this;
-    }
-    Tensor& operator=(Tensor&& other) noexcept {
-        if (this != &other) {
-            delete[] datos;
-            datos = other.datos;
-            shape = std::move(other.shape);
-            total_size = other.total_size;
-            other.datos = nullptr;
-            other.total_size = 0;
-        }
-        return *this;
-    }
     ~Tensor() {
         delete[] datos;
     }
+
     Tensor view(const vector<size_t>& new_shape) const {
         if (new_shape.size() == 0 || new_shape.size() > 3) {
             throw invalid_argument("La nueva forma debe tener entre 1 y 3 dimensiones");
         }
         size_t new_total = 1;
-
         for (size_t dim : new_shape) {
             new_total *= dim;
         }
@@ -100,6 +65,7 @@ public:
                 throw invalid_argument("Todos los tensores deben tener el mismo numero de dimensiones");
             }
             for (size_t i = 0; i < base_shape.size(); i++) {
+
                 if (i != dim && t.shape[i] != base_shape[i]) {
                     throw invalid_argument("Dimensiones incompatibles para concatenacion");
                 }
@@ -118,6 +84,16 @@ public:
             }
         }
         return Tensor(new_shape, values);
+    }
+    friend Tensor dot(const Tensor& a, const Tensor& b) {
+        if (a.shape != b.shape) {
+            throw invalid_argument("Dimensiones incompatibles para producto punto");
+        }
+        double suma = 0;
+        for (size_t i = 0; i < a.total_size; i++) {
+            suma += a.datos[i] * b.datos[i];
+        }
+        return Tensor({1}, {suma});
     }
     friend ostream& operator<<(ostream& os, const Tensor& t) {
         if (t.total_size == 0) return os << "[]";
@@ -142,28 +118,9 @@ public:
             }
             os << "]";
         }
-        else if (dims == 3) {
-            size_t profundidad = t.shape[0];
-            size_t filas = t.shape[1];
-            size_t columnas = t.shape[2];
-            os << "[\n";
-            for (size_t d = 0; d < profundidad; d++) {
-                os << " [\n";
-                for (size_t j = 0; j < filas; j++) {
-                    os << " [\n";
-                    for (size_t k = 0; k < columnas; k++) {
-                        os << t.datos[d * filas * columnas + d * columnas + j] << (j == columnas - 1 ? "" : ", ");
-                    }
-                    os << "]" << (j == filas - 1 ? "" : ",\n");
-                }
-                os << "\n ]" << (d == profundidad - 1 ? "" : ",\n");
-            }
-            os << "\n]";
-        }
         return os;
     }
     friend Tensor operator+(const Tensor& tensor1, const Tensor& tensor2) {
-
         if (tensor1.shape != tensor2.shape) {
             throw invalid_argument("Dimensiones no compatibles para la suma");
         }
@@ -221,24 +178,12 @@ public:
         return Tensor(nuevo_shape, res_values);
     }
 };
-
 int main() {
     try {
-        Tensor t1({2,2}, {1.0,2.0,3.0,4.0});
-        Tensor t2({2,2}, {5.0,6.0,7.0,8.0});
-        Tensor t3 = t2 * t1;
-        cout<<"Primera matriz:\n"<<t1<<endl;
-        cout<<"Segunda matriz:\n"<<t2<<endl;
-        cout<<"Resultado suma:\n"<<t3<<endl;
-        Tensor A({4},{0,1,2,3});
-        Tensor B = A.view({2,2});
-        cout<<"\nView:\n"<<B<<endl;
-        Tensor C = A.unsqueeze(0);
-        cout<<"\nUnsqueeze:\n"<<C<<endl;
-        Tensor D({2,2},{1,2,3,4});
-        Tensor E({2,2},{5,6,7,8});
-        Tensor F = Tensor::concat({D,E},0);
-        cout<<"\nConcat:\n"<<F<<endl;
+        Tensor A({3},{1,2,3});
+        Tensor B({3},{4,5,6});
+        Tensor C = dot(A,B);
+        cout<<"Producto punto:\n"<<C<<endl;
     }
     catch(const exception& e){
         cerr<<"Error: "<<e.what()<<endl;
