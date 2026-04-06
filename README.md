@@ -8,3 +8,5 @@ Instrucciones de compilacion,
 se trabajo en C++, se necesita al menos un C++, versión igual o superior al 11. Al usar el comandos como "noexcept" y "move"
 
 Instruciones de ejecucion: En el main, colocar/escribir, que Tensor quiera crear. Se puede crear tensores al escribir Tensor "nombre a su elecion" y luego colocar el {tamaño}, como ultimo parametro colocar una lista de valores cualqueira {1,2,3,4}. Esto es para crear el tensor de la manera más básica
+
+Este trabajo fue hecho por Joaquim Carrión y Sebastian Falby
